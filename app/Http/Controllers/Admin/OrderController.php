@@ -37,14 +37,24 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:To Pay,To Ship,To Receive,Completed',
+            'status' => 'required|in:pending,processing,shipped,delivered',
         ]);
+
+        // Check if moving backwards in status is allowed
+        $statuses = ['pending', 'processing', 'shipped', 'delivered'];
+        $currentStatusIndex = array_search($order->status, $statuses);
+        $newStatusIndex = array_search($validated['status'], $statuses);
+
+        // Prevent moving backwards
+        if ($newStatusIndex < $currentStatusIndex) {
+            return redirect()->back()->with('error', 'Cannot move order backwards in status. Statuses must progress: Pending → Processing → Shipped → Delivered');
+        }
 
         $order->update([
             'status' => $validated['status']
         ]);
 
-        return redirect()->back()->with('success', 'Order status updated successfully.');
+        return redirect()->back()->with('success', 'Order status has been updated to ' . ucfirst($validated['status']) . ' ✓');
     }
 
     public function exportPdf(Order $order)

@@ -131,13 +131,44 @@
                                 {{ $order->created_at->format('M d, Y h:i A') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <div class="flex space-x-2">
+                                <div class="flex space-x-2 items-center">
                                     <a href="{{ route('admin.orders.show', $order) }}" class="px-3 py-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg flex items-center shadow-sm hover:shadow-md transition text-xs">
                                         <i class="fas fa-eye mr-1"></i> View
                                     </a>
-                                    <button class="px-3 py-1 bg-gradient-to-r from-amber-600 to-red-600 hover:from-amber-700 hover:to-red-700 text-white rounded-lg flex items-center shadow-sm hover:shadow-md transition text-xs" onclick="openStatusModal({{ $order->id }})">
-                                        <i class="fas fa-edit mr-1"></i> Status
-                                    </button>
+                                    <!-- Status Dropdown with JavaScript -->
+                                    <div class="status-dropdown-container-{{ $order->id }}">
+                                        <button type="button" class="px-3 py-1 bg-gradient-to-r from-amber-600 to-red-600 hover:from-amber-700 hover:to-red-700 text-white rounded-lg flex items-center shadow-sm hover:shadow-md transition text-xs font-semibold status-btn-{{ $order->id }}" onclick="toggleStatusDropdown('{{ $order->id }}', event)">
+                                            <i class="fas fa-edit mr-1"></i> Status
+                                            <i class="fas fa-chevron-down ml-1 text-xs status-chevron-{{ $order->id }} transition-transform"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Dropdown Menu - Fixed Position to avoid scrolling -->
+                                    <div class="fixed hidden status-menu-{{ $order->id }} z-50 bg-slate-800 rounded-lg shadow-2xl border border-amber-500/30 w-48" style="pointer-events: auto; top: auto; left: auto;">
+                                        @php
+                                            $statuses = ['pending', 'processing', 'shipped', 'delivered'];
+                                            $statusLabels = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+                                            $statusIcons = ['fa-clock', 'fa-cogs', 'fa-truck', 'fa-check-circle'];
+                                        @endphp
+                                        @foreach($statuses as $index => $status)
+                                        <form method="POST" action="{{ route('admin.orders.updateStatus', $order->id) }}" class="block" onsubmit="closeStatusDropdown('{{ $order->id }}')">>
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="status" value="{{ $status }}">
+                                            <button type="submit" class="w-full text-left px-4 py-3 hover:bg-blue-900/50 transition {{ $order->status === $status ? 'bg-blue-900/60 border-l-4 border-amber-500' : 'border-l-4 border-transparent' }} flex items-center justify-between">
+                                                <span class="flex items-center">
+                                                    <i class="fas {{ $statusIcons[$index] }} mr-2 {{ $order->status === $status ? 'text-amber-400' : 'text-gray-400' }}"></i>
+                                                    <span class="text-white text-sm {{ $order->status === $status ? 'font-semibold text-amber-300' : '' }}">
+                                                        {{ $statusLabels[$index] }}
+                                                    </span>
+                                                </span>
+                                                @if($order->status === $status)
+                                                    <i class="fas fa-check text-amber-400 text-xs ml-2"></i>
+                                                @endif
+                                            </button>
+                                        </form>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -158,54 +189,67 @@
     </div>
 </div>
 
-<!-- Status Update Modal -->
-<div id="statusModal" class="hidden fixed inset-0 bg-slate-950/70 overflow-y-auto h-full w-full flex items-center justify-center z-50 backdrop-blur">
-    <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg shadow-2xl max-w-md mx-auto p-6 border border-amber-500/20">
-        <h3 class="text-lg font-semibold text-amber-300 mb-4">Update Order Status</h3>
-        <form id="updateStatusForm" method="POST" action="">
-            @csrf
-            @method('PUT')
-            <div class="mb-4">
-                <label for="status" class="block text-sm font-medium text-gray-300 mb-2">Select Status</label>
-                <select id="status" name="status" class="w-full border border-amber-500/30 bg-slate-900/50 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="completed">Completed</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-            <div class="flex justify-end space-x-3">
-                <button type="button" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded transition" onclick="closeStatusModal()">
-                    Cancel
-                </button>
-                <button type="submit" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-red-600 hover:from-amber-700 hover:to-red-700 text-white rounded transition">
-                    Update
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-@endsection
-
-@section('scripts')
 <script>
-    function openStatusModal(orderId) {
-        document.getElementById('updateStatusForm').action = `/admin/orders/${orderId}/status`;
-        document.getElementById('statusModal').classList.remove('hidden');
-    }
-
-    function closeStatusModal() {
-        document.getElementById('statusModal').classList.add('hidden');
-    }
-
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-        const modal = document.getElementById('statusModal');
-        if (event.target === modal) {
-            closeStatusModal();
+    function toggleStatusDropdown(orderId, event) {
+        event.stopPropagation();
+        const btn = document.querySelector(`.status-btn-${orderId}`);
+        const menu = document.querySelector(`.status-menu-${orderId}`);
+        const chevron = document.querySelector(`.status-chevron-${orderId}`);
+        
+        // Close other dropdowns
+        document.querySelectorAll('[class*="status-menu-"]').forEach(m => {
+            if (!m.classList.contains(`status-menu-${orderId}`)) {
+                m.classList.add('hidden');
+            }
+        });
+        
+        // Toggle current dropdown
+        const isHidden = menu.classList.toggle('hidden');
+        chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        
+        // Position the menu at the button location
+        if (!isHidden) {
+            positionDropdown(orderId, btn, menu);
         }
     }
+
+    function positionDropdown(orderId, btn, menu) {
+        const rect = btn.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 8) + 'px';
+        menu.style.left = (rect.right - 192) + 'px'; // 192px is w-48
+    }
+
+    function closeStatusDropdown(orderId) {
+        const menu = document.querySelector(`.status-menu-${orderId}`);
+        const chevron = document.querySelector(`.status-chevron-${orderId}`);
+        menu.classList.add('hidden');
+        chevron.style.transform = 'rotate(0deg)';
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        document.querySelectorAll('[class*="status-menu-"]').forEach(menu => {
+            const orderId = menu.className.match(/status-menu-(\d+)/)[1];
+            const container = document.querySelector(`.status-dropdown-container-${orderId}`);
+            
+            if (!container?.contains(event.target) && !menu.contains(event.target)) {
+                menu.classList.add('hidden');
+                const chevron = document.querySelector(`.status-chevron-${orderId}`);
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+
+    // Reposition dropdowns on scroll
+    window.addEventListener('scroll', function() {
+        document.querySelectorAll('[class*="status-menu-"]:not(.hidden)').forEach(menu => {
+            const orderId = menu.className.match(/status-menu-(\d+)/)[1];
+            const btn = document.querySelector(`.status-btn-${orderId}`);
+            if (btn) {
+                positionDropdown(orderId, btn, menu);
+            }
+        });
+    }, true);
 </script>
+
 @endsection

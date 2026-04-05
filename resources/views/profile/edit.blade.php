@@ -55,14 +55,23 @@
 
                     <div class="md:col-span-2">
                         <label for="avatar" class="block text-sm font-semibold text-amber-300 mb-3">📷 Upload New Avatar</label>
-                        <div class="relative border-2 border-dashed border-amber-500/30 rounded-lg p-6 hover:border-amber-500/60 transition bg-slate-900/50">
-                            <input type="file" id="avatar" name="avatar" accept="image/*" class="hidden" onchange="previewAvatar(event)">
-                            <label for="avatar" class="cursor-pointer flex flex-col items-center justify-center">
+                        
+                        <!-- Drop Zone -->
+                        <div id="userDropZone" class="relative border-2 border-dashed border-amber-500/30 rounded-lg p-6 hover:border-amber-500/60 transition bg-slate-900/50 cursor-pointer">
+                            <input type="file" id="avatar" name="avatar" accept="image/*" class="hidden" onchange="handleUserAvatarSelect(event)">
+                            <label for="avatar" class="cursor-pointer flex flex-col items-center justify-center pointer-events-none">
                                 <i class="fas fa-cloud-upload-alt text-amber-400 text-3xl mb-2"></i>
                                 <span class="text-amber-300 font-medium">Click to upload or drag & drop</span>
-                                <span class="text-xs text-gray-400 mt-1">PNG, JPG, GIF (Max 5MB)</span>
+                                <span class="text-xs text-gray-400 mt-1">PNG, JPG, GIF (Max 5MB, 100x100 to 2000x2000px)</span>
                             </label>
                         </div>
+
+                        <!-- Image Preview -->
+                        <div id="userPreviewContainer" class="hidden mt-4">
+                            <img id="userPreviewImage" src="" alt="Preview" class="w-32 h-32 rounded-lg ring-4 ring-green-500/50 object-cover mx-auto animate-pulse">
+                            <p class="text-center text-green-400 text-sm mt-2">✓ Preview - Click save to confirm</p>
+                        </div>
+
                         @error('avatar')
                             <p class="text-sm text-red-400 mt-2 flex items-center">
                                 <i class="fas fa-exclamation-circle mr-2"></i> {{ $message }}
@@ -188,31 +197,94 @@
     </div>
 </div>
 
-<!-- Avatar Preview Script -->
+<!-- Avatar Upload Script -->
 <script>
-    function previewAvatar(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // You can add live preview here if needed
-                console.log('Avatar selected:', file.name);
-            };
-            reader.readAsDataURL(file);
-        }
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('avatar');
+        const dropZone = document.getElementById('userDropZone');
+        const previewContainer = document.getElementById('userPreviewContainer');
+        const previewImage = document.getElementById('userPreviewImage');
 
-    // Optional: Drag and drop support
-    const dropArea = document.querySelector('[role="region"]');
-    if (dropArea) {
+        if (!fileInput || !dropZone) return;
+
+        // Click to upload
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.closest('button') === null) {
+                fileInput.click();
+            }
+        });
+
+        // Drag and drop
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
+            dropZone.addEventListener(eventName, preventDefaults, false);
         });
 
         function preventDefaults(e) {
             e.preventDefault();
             e.stopPropagation();
         }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('border-amber-500', 'bg-amber-500/20');
+                dropZone.classList.remove('border-amber-500/30');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('border-amber-500', 'bg-amber-500/20');
+                dropZone.classList.add('border-amber-500/30');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+
+    function handleUserAvatarSelect(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+            alert('Please select a valid image file (PNG, JPG, GIF)');
+            document.getElementById('avatar').value = '';
+            document.getElementById('userPreviewContainer').classList.add('hidden');
+            return;
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            document.getElementById('avatar').value = '';
+            document.getElementById('userPreviewContainer').classList.add('hidden');
+            return;
+        }
+
+        // Read and show preview
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                // Validate dimensions
+                if (img.width < 100 || img.height < 100 || img.width > 2000 || img.height > 2000) {
+                    alert('Image dimensions must be between 100x100 and 2000x2000 pixels');
+                    document.getElementById('avatar').value = '';
+                    document.getElementById('userPreviewContainer').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById('userPreviewImage').src = event.target.result;
+                document.getElementById('userPreviewContainer').classList.remove('hidden');
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 </script>
 @endsection

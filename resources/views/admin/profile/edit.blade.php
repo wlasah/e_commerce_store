@@ -53,10 +53,11 @@
 
                         <!-- Drag & Drop Upload -->
                         <div id="dropZone"
-                            class="border-2 border-dashed border-amber-500/30 rounded-lg p-8 cursor-pointer transition-all duration-200 mb-4 hover:border-amber-500 hover:bg-amber-500/10">
+                            class="border-2 border-dashed border-amber-500/30 rounded-lg p-8 cursor-pointer transition-all duration-200 mb-4 hover:border-amber-500 hover:bg-amber-500/10"
+                            data-input="avatar">
                             <input type="file" name="avatar" id="avatar" 
                                 class="hidden @error('avatar') is-invalid @enderror" accept="image/jpeg,image/png,image/gif,image/jpg">
-                            <div class="text-center">
+                            <div class="text-center pointer-events-none">
                                 <i class="fas fa-cloud-upload-alt text-amber-500 text-4xl mb-3"></i>
                                 <p class="text-slate-300 font-semibold">Click to upload or drag & drop</p>
                                 <p class="text-slate-400 text-sm">PNG, JPG, GIF up to 5MB (100x100 to 2000x2000px)</p>
@@ -64,6 +65,12 @@
                             @error('avatar')
                                 <div class="text-red-500 text-sm mt-2">{{ $message }}</div>
                             @enderror
+                        </div>
+
+                        <!-- Image Preview -->
+                        <div id="previewContainer" class="hidden mb-4">
+                            <img id="previewImage" src="" alt="Preview" class="w-32 h-32 rounded-full ring-4 ring-green-500/50 object-cover mx-auto animate-pulse">
+                            <p class="text-center text-green-400 text-sm mt-2" id="previewText">Preview - Select to confirm or drag another image</p>
                         </div>
 
                         <!-- Profile Fields -->
@@ -214,50 +221,104 @@
 
 @push('scripts')
 <script>
-    // Handle file input for drag and drop
-    const fileInput = document.querySelector('input[name="avatar"]');
-    if (fileInput) {
-        const label = fileInput.previousElementSibling;
-        
-        fileInput.addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name;
-            if (fileName) {
-                label.innerHTML = `<i class="fas fa-check-circle text-amber-500"></i> ${fileName}`;
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('avatar');
+        const dropZone = document.getElementById('dropZone');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const avatarForm = document.getElementById('avatarForm');
+
+        if (!fileInput || !dropZone) return;
+
+        // Click to upload
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.closest('button') === null) {
+                fileInput.click();
             }
         });
 
-        // Drag and drop functionality
-        const dropArea = fileInput.parentElement;
-        if (dropArea) {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, preventDefaults, false);
-            });
+        // Handle file selection
+        fileInput.addEventListener('change', handleFileSelect);
 
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
+        // Drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('border-amber-500', 'bg-amber-500/20');
+                dropZone.classList.remove('border-amber-500/30', 'hover:bg-amber-500/10');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('border-amber-500', 'bg-amber-500/20');
+                dropZone.classList.add('border-amber-500/30', 'hover:bg-amber-500/10');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        // Handle file preview
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+                alert('Please select a valid image file (PNG, JPG, GIF)');
+                fileInput.value = '';
+                return;
             }
 
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropArea.addEventListener(eventName, () => {
-                    fileInput.classList.add('dragging');
-                }, false);
-            });
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                fileInput.value = '';
+                return;
+            }
 
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropArea.addEventListener(eventName, () => {
-                    fileInput.classList.remove('dragging');
-                }, false);
-            });
+            // Read and show preview
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Validate dimensions
+                    if (img.width < 100 || img.height < 100 || img.width > 2000 || img.height > 2000) {
+                        alert('Image dimensions must be between 100x100 and 2000x2000 pixels');
+                        fileInput.value = '';
+                        previewContainer.classList.add('hidden');
+                        return;
+                    }
 
-            dropArea.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                fileInput.files = files;
-                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            }, false);
+                    previewImage.src = event.target.result;
+                    previewContainer.classList.remove('hidden');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
         }
-    }
+
+        // Auto-submit on form submit with file selected
+        avatarForm.addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select an image file');
+            }
+        });
+    });
 </script>
 @endpush
 
