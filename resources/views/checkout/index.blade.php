@@ -1,116 +1,139 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Checkout</h1>
-    
-    @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {{ session('error') }}
+<div class="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 py-10">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-amber-400 via-red-400 to-blue-400 bg-clip-text text-transparent">🛒 Checkout</h1>
+            <p class="text-gray-400 mt-2">Review your order and complete payment</p>
         </div>
-    @endif
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        @if(session('error'))
+            <div class="mb-4 bg-gradient-to-r from-red-900/30 to-red-800/30 border-l-4 border-red-500 text-red-300 px-6 py-4 rounded-lg flex items-center">
+                <i class="fas fa-exclamation-circle mr-3 text-red-500"></i>
+                {{ session('error') }}
+            </div>
+        @endif
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Order Summary -->
-        <div class="md:col-span-2">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-2 text-gray-700">Product</th>
-                                    <th class="px-4 py-2 text-gray-700">Quantity</th>
-                                    <th class="px-4 py-2 text-gray-700">Price</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                @foreach($cartItems as $item)
-                                    <tr>
-                                        <td class="px-4 py-3">
-                                            <div class="flex items-center">
-                                                <div class="w-12 h-12 mr-3 overflow-hidden">
-                                                    @if($item->product->image_path)
-                                                        <img src="{{ asset('storage/' . $item->product->image_path) }}" 
-                                                             alt="{{ $item->product->name }}" class="w-full h-full object-cover">
-                                                    @else
-                                                        <div class="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                            <span class="text-gray-500 text-xs">No Image</span>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                                <div>
-                                                    <h3 class="font-medium text-gray-800">{{ $item->product->name }}</h3>
-                                                </div>
+        <div class="lg:col-span-2">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-xl overflow-hidden border border-amber-500/20 mb-6">
+                <div class="px-6 py-4 border-b border-amber-500/20 bg-gradient-to-r from-blue-900/40 to-red-900/40">
+                    <h2 class="text-lg font-semibold text-amber-300 flex items-center gap-2">
+                        <i class="fas fa-box"></i> Order Summary
+                    </h2>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gradient-to-r from-blue-900/40 to-red-900/40 border-b border-amber-500/10">
+                            <tr>
+                                <th class="px-4 py-3 text-xs font-semibold text-amber-300 uppercase tracking-wider">Product</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-amber-300 uppercase tracking-wider text-center">Qty</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-amber-300 uppercase tracking-wider text-right">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-amber-500/10">
+                            @foreach($cartItems as $item)
+                                <tr class="hover:bg-blue-900/20 transition">
+                                    <td class="px-4 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-16 h-16 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
+                                                @if($item->product->image_path)
+                                                    <img src="{{ asset('storage/' . $item->product->image_path) }}" 
+                                                         alt="{{ $item->product->name }}" class="w-full h-full object-cover">
+                                                @else
+                                                    <div class="w-full h-full flex items-center justify-center">
+                                                        <i class="fas fa-image text-slate-500 text-2xl"></i>
+                                                    </div>
+                                                @endif
                                             </div>
-                                        </td>
-                                        <td class="px-4 py-3">{{ $item->quantity }}</td>
-                                        <td class="px-4 py-3">${{ number_format($item->product->price * $item->quantity, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                            <tfoot class="bg-gray-50">
-                                <tr>
-                                    <td class="px-4 py-3 font-bold" colspan="2">Total</td>
-                                    <td class="px-4 py-3 font-bold">${{ number_format($total, 2) }}</td>
+                                            <div>
+                                                <h3 class="font-medium text-slate-200 text-sm">{{ $item->product->name }}</h3>
+                                                <p class="text-slate-400 text-xs mt-1">SKU: {{ $item->product->id }}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-center text-slate-300">{{ $item->quantity }}</td>
+                                    <td class="px-4 py-4 text-right text-green-400 font-semibold">₱{{ number_format($item->product->price * $item->quantity, 2) }}</td>
                                 </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="bg-gradient-to-r from-blue-900/40 to-red-900/40 border-t border-amber-500/10">
+                            <tr>
+                                <td class="px-4 py-3 font-bold text-amber-300" colspan="2">Total Amount</td>
+                                <td class="px-4 py-3 text-right font-bold text-yellow-400 text-lg">₱{{ number_format($total, 2) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
         
         <!-- Checkout Form -->
-        <div class="md:col-span-1">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="p-6">
-                    <h2 class="text-xl font-semibold mb-4">Shipping & Payment</h2>
+        <div class="lg:col-span-1">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl shadow-xl overflow-hidden border border-amber-500/20 sticky top-4">
+                <div class="px-6 py-4 border-b border-amber-500/20 bg-gradient-to-r from-blue-900/40 to-red-900/40">
+                    <h2 class="text-lg font-semibold text-amber-300 flex items-center gap-2">
+                        <i class="fas fa-truck"></i> Shipping & Payment
+                    </h2>
+                </div>
+                
+                <form action="{{ route('checkout.process') }}" method="POST" class="p-6 space-y-5">
+                    @csrf
                     
-                    <form action="{{ route('checkout.process') }}" method="POST">
-                        @csrf
-                        
-                        <div class="mb-4">
-                            <label for="shipping_address" class="block text-sm font-medium text-gray-700 mb-1">Shipping Address</label>
-                            <textarea name="shipping_address" id="shipping_address" rows="3" 
-                                      class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
-                                      required>{{ old('shipping_address') }}</textarea>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-                            <div class="space-y-2">
-                                <div class="flex items-center">
-                                    <input type="radio" id="credit_card" name="payment_method" value="credit_card" 
-                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300" 
-                                           checked>
-                                    <label for="credit_card" class="ml-2 text-sm text-gray-700">Credit Card</label>
-                                </div>
-                                <div class="flex items-center">
-                                    <input type="radio" id="paypal" name="payment_method" value="paypal" 
-                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                    <label for="paypal" class="ml-2 text-sm text-gray-700">PayPal</label>
-                                </div>
-                                <div class="flex items-center">
-                                    <input type="radio" id="cash_on_delivery" name="payment_method" value="cash_on_delivery" 
-                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                                    <label for="cash_on_delivery" class="ml-2 text-sm text-gray-700">Cash on Delivery</label>
-                                </div>
+                    <!-- Shipping Address -->
+                    <div>
+                        <label for="shipping_address" class="block text-sm font-semibold text-amber-300 mb-2">📍 Shipping Address</label>
+                        <textarea name="shipping_address" id="shipping_address" rows="4" 
+                                  class="w-full bg-slate-900 border border-amber-500/20 text-white rounded-lg px-4 py-3 focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 outline-none transition resize-none @error('shipping_address') border-red-500 @enderror" 
+                                  placeholder="Enter your full shipping address" 
+                                  required>{{ old('shipping_address') }}</textarea>
+                        @error('shipping_address')
+                            <p class="text-red-400 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div>
+                        <label class="block text-sm font-semibold text-amber-300 mb-3">💳 Payment Method</label>
+                        <div class="space-y-3">
+                            <div class="flex items-center p-3 border border-amber-500/20 rounded-lg hover:bg-blue-900/20 cursor-pointer transition">
+                                <input type="radio" id="credit_card" name="payment_method" value="credit_card" 
+                                       class="w-4 h-4 text-amber-500 bg-slate-900 border-amber-500/30 focus:ring-amber-500" 
+                                       checked>
+                                <label for="credit_card" class="ml-3 text-sm text-slate-300 cursor-pointer flex-1">
+                                    <i class="fas fa-credit-card mr-2 text-amber-400"></i> Credit Card
+                                </label>
+                            </div>
+                            <div class="flex items-center p-3 border border-amber-500/20 rounded-lg hover:bg-blue-900/20 cursor-pointer transition">
+                                <input type="radio" id="paypal" name="payment_method" value="paypal" 
+                                       class="w-4 h-4 text-amber-500 bg-slate-900 border-amber-500/30 focus:ring-amber-500">
+                                <label for="paypal" class="ml-3 text-sm text-slate-300 cursor-pointer flex-1">
+                                    <i class="fab fa-paypal mr-2 text-blue-400"></i> PayPal
+                                </label>
+                            </div>
+                            <div class="flex items-center p-3 border border-amber-500/20 rounded-lg hover:bg-blue-900/20 cursor-pointer transition">
+                                <input type="radio" id="cash_on_delivery" name="payment_method" value="cash_on_delivery" 
+                                       class="w-4 h-4 text-amber-500 bg-slate-900 border-amber-500/30 focus:ring-amber-500">
+                                <label for="cash_on_delivery" class="ml-3 text-sm text-slate-300 cursor-pointer flex-1">
+                                    <i class="fas fa-money-bill mr-2 text-green-400"></i> Cash on Delivery
+                                </label>
                             </div>
                         </div>
-                        
-                        <div class="flex flex-col space-y-3">
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-150">
-                                Place Order
-                            </button>
-                            <a href="{{ route('cart.index') }}" class="text-center text-indigo-600 hover:text-indigo-800">
-                                Return to Cart
-                            </a>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex flex-col gap-3 pt-4 border-t border-amber-500/20">
+                        <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg">
+                            <i class="fas fa-check-circle"></i> Place Order
+                        </button>
+                        <a href="{{ route('cart.index') }}" class="w-full text-center bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
+                            <i class="fas fa-arrow-left"></i> Return to Cart
+                        </a>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

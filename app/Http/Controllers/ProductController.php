@@ -15,6 +15,15 @@ class ProductController extends Controller
     {
         $query = Product::with('category')->where('stock_quantity', '>', 0);
 
+        // Search by product name or description
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
         // Filter by category (parent or child)
         if ($request->has('category') && $request->category) {
             $categoryId = $request->category;

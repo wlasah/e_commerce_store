@@ -5,11 +5,11 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <!-- Filter Panel -->
         <div class="bg-gradient-to-br from-slate-800 to-blue-900 dark:from-slate-900 dark:to-blue-950 p-6 rounded-2xl shadow-2xl border border-amber-500/20 mb-10 backdrop-blur">
-            <form action="{{ route('products.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <form action="{{ route('products.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4" id="filterForm">
                 <!-- Category -->
                 <div>
                     <label for="category" class="block text-sm font-bold text-amber-200 mb-2">📂 Category</label>
-                    <select name="category" id="category" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition">
+                    <select name="category" id="category" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition" onchange="document.getElementById('filterForm').submit()">
                         <option value="" class="bg-slate-700">All Categories</option>
                         @foreach ($categories as $parentCategory)
                             <optgroup label="{{ $parentCategory->name }}" class="bg-slate-700">
@@ -27,35 +27,82 @@
                 <div>
                     <label for="search" class="block text-sm font-bold text-amber-200 mb-2">🔍 Search</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}"
-                           class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition" placeholder="Search products...">
+                           class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition placeholder-"Search products..."">
                 </div>
 
-            <!-- Sort -->
-            <div>
-                <label for="sort" class="block text-sm font-bold text-amber-200 mb-2">📊 Sort By</label>
-                <select name="sort" id="sort" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition">
-                    <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }} class="bg-slate-700">Newest</option>
-                    <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }} class="bg-slate-700">Price: Low to High</option>
-                    <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }} class="bg-slate-700">Price: High to Low</option>
-                </select>
-            </div>
+                <!-- Sort -->
+                <div>
+                    <label for="sort" class="block text-sm font-bold text-amber-200 mb-2">📊 Sort By</label>
+                    <select name="sort" id="sort" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition" onchange="document.getElementById('filterForm').submit()">
+                        <option value="" class="bg-slate-700">Default</option>
+                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }} class="bg-slate-700">Newest</option>
+                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }} class="bg-slate-700">Price: Low to High</option>
+                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }} class="bg-slate-700">Price: High to Low</option>
+                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }} class="bg-slate-700">Name: A-Z</option>
+                    </select>
+                </div>
 
-            <!-- Filter Button -->
-            <div class="flex items-end">
-                <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition">
-                    🔍 Search
-                </button>
-            </div>
-        </form>
-    </div>
+                <!-- Filter Button -->
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition">
+                        🔍 Search
+                    </button>
+                </div>
+            </form>
+        </div>
 
     <!-- Header -->
-    <div class="flex justify-between items-center mb-10">
+    <div class="flex justify-between items-center mb-8">
         <div>
             <h1 class="text-4xl font-bold bg-gradient-to-r from-amber-400 via-red-400 to-blue-400 bg-clip-text text-transparent mb-2">🛍️ Products</h1>
             <p class="text-gray-300">Discover amazing items from our collection</p>
         </div>
     </div>
+
+    <!-- Applied Filters Display -->
+    @php
+        $hasFilters = request()->has('search') || request()->has('category') || request()->has('sort');
+        $selectedCategory = null;
+        if (request()->has('category') && request()->category) {
+            $selectedCategory = \App\Models\Category::find(request()->category);
+        }
+    @endphp
+    @if($hasFilters)
+        <div class="mb-6 bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-blue-500/30 rounded-lg p-4 flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-slate-300 font-semibold">✨ Active Filters:</span>
+                @if(request()->has('category') && request()->category && $selectedCategory)
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/20 border border-amber-500/50 text-amber-300 rounded-full text-sm font-medium hover:bg-amber-500/30 transition">
+                        <i class="fas fa-folder"></i> {{ $selectedCategory->name }}
+                        <a href="{{ route('products.index', array_merge(request()->query(), ['category' => null])) }}" class="ml-1 font-bold hover:text-amber-200 transition">✕</a>
+                    </span>
+                @endif
+                @if(request()->has('search') && request()->search)
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 border border-blue-500/50 text-blue-300 rounded-full text-sm font-medium hover:bg-blue-500/30 transition">
+                        <i class="fas fa-search"></i> "{{ request()->search }}"
+                        <a href="{{ route('products.index', array_merge(request()->query(), ['search' => null])) }}" class="ml-1 font-bold hover:text-blue-200 transition">✕</a>
+                    </span>
+                @endif
+                @if(request()->has('sort') && request()->sort)
+                    @php
+                        $sortLabels = [
+                            'newest' => 'Newest First',
+                            'price_asc' => 'Price: Low to High',
+                            'price_desc' => 'Price: High to Low',
+                            'name_asc' => 'Name: A-Z'
+                        ];
+                    @endphp
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-500/20 border border-purple-500/50 text-purple-300 rounded-full text-sm font-medium hover:bg-purple-500/30 transition">
+                        <i class="fas fa-sort"></i> {{ $sortLabels[request()->sort] ?? request()->sort }}
+                        <a href="{{ route('products.index', array_merge(request()->query(), ['sort' => null])) }}" class="ml-1 font-bold hover:text-purple-200 transition">✕</a>
+                    </span>
+                @endif
+            </div>
+            <a href="{{ route('products.index') }}" class="text-red-400 hover:text-red-300 font-semibold text-sm flex items-center gap-2 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full hover:bg-red-500/30 transition">
+                <i class="fas fa-times-circle"></i> Clear All
+            </a>
+        </div>
+    @endif
 
     <!-- Product Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -102,8 +149,19 @@
                 </div>
             </div>
         @empty
-            <div class="col-span-full py-10 text-center text-gray-500 text-lg">
-                No products found.
+            <div class="col-span-full py-16 text-center">
+                <div class="inline-block">
+                    <i class="fas fa-search text-6xl text-slate-600 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-slate-400 mb-2">No Products Found</h3>
+                    @if($hasFilters)
+                        <p class="text-slate-500 mb-6">Try adjusting your filters or search terms</p>
+                        <a href="{{ route('products.index') }}" class="inline-flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-600 to-red-600 hover:from-amber-700 hover:to-red-700 text-white font-bold rounded-lg transition">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                    @else
+                        <p class="text-slate-500">No products available at the moment</p>
+                    @endif
+                </div>
             </div>
         @endforelse
     </div>
