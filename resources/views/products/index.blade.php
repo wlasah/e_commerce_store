@@ -9,12 +9,12 @@
                 <!-- Category -->
                 <div>
                     <label for="category" class="block text-sm font-bold text-amber-200 mb-2">📂 Category</label>
-                    <select name="category" id="category" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition" onchange="document.getElementById('filterForm').submit()">
-                        <option value="" class="bg-slate-700">All Categories</option>
+                    <select name="category" id="category" class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-amber-400/50 text-white appearance-none cursor-pointer focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/50" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">All Categories</option>
                         @foreach ($categories as $parentCategory)
-                            <optgroup label="{{ $parentCategory->name }}" class="bg-slate-700">
+                            <optgroup label="{{ $parentCategory->name }}">
                                 @foreach ($parentCategory->children as $childCategory)
-                                    <option value="{{ $childCategory->id }}" {{ request('category') == $childCategory->id ? 'selected' : '' }} class="bg-slate-700">
+                                    <option value="{{ $childCategory->id }}" {{ request('category') == $childCategory->id ? 'selected' : '' }}>
                                         {{ $childCategory->name }}
                                     </option>
                                 @endforeach
@@ -26,19 +26,19 @@
                 <!-- Search -->
                 <div>
                     <label for="search" class="block text-sm font-bold text-amber-200 mb-2">🔍 Search</label>
-                    <input type="text" name="search" id="search" value="{{ request('search') }}"
-                           class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition placeholder-"Search products..."">
+                    <input type="text" name="search" id="search" placeholder="Search products..." value="{{ request('search') }}"
+                           class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-amber-400/50 text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/50">
                 </div>
 
                 <!-- Sort -->
                 <div>
                     <label for="sort" class="block text-sm font-bold text-amber-200 mb-2">📊 Sort By</label>
-                    <select name="sort" id="sort" class="w-full px-4 py-2 rounded-lg bg-slate-700/50 border border-amber-400/30 text-white placeholder-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/50 transition" onchange="document.getElementById('filterForm').submit()">
-                        <option value="" class="bg-slate-700">Default</option>
-                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }} class="bg-slate-700">Newest</option>
-                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }} class="bg-slate-700">Price: Low to High</option>
-                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }} class="bg-slate-700">Price: High to Low</option>
-                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }} class="bg-slate-700">Name: A-Z</option>
+                    <select name="sort" id="sort" class="w-full px-4 py-2 rounded-lg bg-slate-700 border border-amber-400/50 text-white appearance-none cursor-pointer focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/50" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">Default</option>
+                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest</option>
+                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>Price: Low to High</option>
+                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>Price: High to Low</option>
+                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>Name: A-Z</option>
                     </select>
                 </div>
 
